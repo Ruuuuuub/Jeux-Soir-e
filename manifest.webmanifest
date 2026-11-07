@@ -1,0 +1,11 @@
+{
+  "name": "La Tournée",
+  "short_name": "La Tournée",
+  "description": "Jeu de cartes de soirée, avec ou sans alcool.",
+  "lang": "fr",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#17111c",
+  "theme_color": "#17111c",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
