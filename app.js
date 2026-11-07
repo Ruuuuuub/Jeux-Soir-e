@@ -28,6 +28,7 @@
   function defaultSetup() {
     return {
       names: [],
+      tab: "cartes", // "cartes" ou "mini"
       alcool: true,
       deck: "virtuel", // "virtuel" ou "reel"
       epice: false,
@@ -231,6 +232,18 @@
     window.scrollTo(0, 0);
   }
 
+  // Outils partagés avec les mini-jeux (minijeux.js)
+  var ctx = {
+    get state() { return state; },
+    render: function () { render(); },
+    renderSheet: function () { renderSheet(); },
+    scrollTop: function () { window.scrollTo(0, 0); },
+    esc: esc, rnd: rnd, pick: pick, shuffle: shuffle, unit: unit,
+    scoreRows: function (g, ed) { return scoreRows(g, ed); },
+    ranking: function (g) { return ranking(g); },
+    SUITS: SUITS, VALUES: VALUES, gages: C.gages,
+  };
+
   // ---------- Rendu ----------
   var root = document.getElementById("app");
   var sheetRoot = document.getElementById("sheet");
@@ -238,6 +251,7 @@
   function render() {
     if (state.screen === "setup") root.innerHTML = viewSetup();
     else if (state.screen === "game") root.innerHTML = viewGame();
+    else if (state.screen === "mini") root.innerHTML = window.MINI.view(ctx);
     else root.innerHTML = viewEnd();
     renderSheet();
   }
@@ -264,8 +278,15 @@
       '<header class="hero">' +
         '<div class="suits" aria-hidden="true"><span class="r">♥</span>♠<span class="r">♦</span>♣</div>' +
         "<h1>La Tour<span>née</span></h1>" +
-        "<p>Le jeu de cartes de soirée. Vérités, défis, duels et votes, de 2 joueurs à toute la bande.</p>" +
+        "<p>" + (s.tab === "mini"
+          ? "Des jeux rapides à se passer de main en main : bluff, bombe, cartes et chrono."
+          : "Le jeu de cartes de soirée. Vérités, défis, duels et votes, de 2 joueurs à toute la bande.") + "</p>" +
       "</header>" +
+
+      '<nav class="tabs" aria-label="Choix du jeu">' +
+        '<button type="button" data-act="tab" data-tab="cartes" aria-pressed="' + (s.tab !== "mini") + '">Jeu de cartes</button>' +
+        '<button type="button" data-act="tab" data-tab="mini" aria-pressed="' + (s.tab === "mini") + '">Mini-jeux <span class="new">4 jeux</span></button>' +
+      "</nav>" +
 
       '<section class="section">' +
         '<div class="label"><span>Joueurs</span><span>' + nb + (nb > 1 ? " joueurs" : " joueur") + "</span></div>" +
@@ -283,10 +304,14 @@
           { v: false, label: "Sans alcool", sub: "on compte des points" },
         ]) +
         (s.alcool
-          ? '<p class="note">Bois avec modération. Personne n\'est obligé de boire : une gorgée peut toujours se boire avec du soft ou de l\'eau. Une pause eau est proposée toutes les ' + WATER_EVERY + " cartes.</p>"
+          ? '<p class="note">Bois avec modération. Personne n\'est obligé de boire : une gorgée peut toujours se prendre avec un soft. Pensez à boire de l\'eau entre les verres.</p>'
           : '<p class="note">Chaque pénalité donne des points. À la fin, celui qui en a le plus fait un gage final.</p>') +
       "</section>" +
+      (s.tab === "mini" ? window.MINI.tiles(ctx) : viewCardOptions(s, nb, mainOn, canStart));
+  }
 
+  function viewCardOptions(s, nb, mainOn, canStart) {
+    return '' +
       '<section class="section">' +
         '<div class="label"><span>Les cartes</span></div>' +
         seg("deck", s.deck, [
@@ -485,7 +510,8 @@
   function renderSheet() {
     if (!state.sheet) { sheetRoot.hidden = true; sheetRoot.innerHTML = ""; return; }
     var html = "";
-    var alcool = state.game ? state.game.opts.alcool : state.setup.alcool;
+    var cur = state.screen === "mini" ? state.mini : state.game;
+    var alcool = cur ? cur.opts.alcool : state.setup.alcool;
     if (state.sheet === "rules") {
       var u = alcool ? "gorgées" : "points";
       html = "<h2>Comment on joue</h2>" +
@@ -510,12 +536,14 @@
     } else if (state.sheet === "scores") {
       html = "<h2>Scores</h2>" +
         '<p class="hint">Corrige avec − et + si besoin.</p>' +
-        scoreRows(state.game, true) +
+        scoreRows(state.screen === "mini" ? state.mini : state.game, true) +
         '<button class="btn" type="button" data-act="close">Fermer</button>';
+    } else if (state.sheet === "mini-rules") {
+      html = window.MINI.rules(ctx) + '<button class="btn" type="button" data-act="close">Compris</button>';
     } else if (state.sheet === "quit") {
       html = "<h2>Finir la partie ?</h2><p>On passe directement au classement" + (alcool ? "." : " et au gage final.") + "</p>" +
         '<div class="btn-row"><button class="btn ghost" type="button" data-act="close">Continuer</button>' +
-        '<button class="btn" type="button" data-act="end">Terminer</button></div>';
+        '<button class="btn" type="button" data-act="' + (state.screen === "mini" ? "m-end" : "end") + '">Terminer</button></div>';
     }
     sheetRoot.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + html + "</div>";
     sheetRoot.hidden = false;
@@ -569,8 +597,10 @@
         g.water = false; render(); break;
       case "del-rule":
         g.rules.splice(+t.dataset.i, 1); render(); break;
+      case "tab":
+        s.tab = t.dataset.tab; saveSetup(); render(); break;
       case "score": {
-        var pl = g.players[+t.dataset.i];
+        var pl = (state.screen === "mini" ? state.mini : g).players[+t.dataset.i];
         pl.score = Math.max(0, pl.score + +t.dataset.d); renderSheet(); break;
       }
       case "end":
@@ -582,7 +612,10 @@
       case "replay":
         startGame(); break;
       case "home":
-        state.screen = "setup"; state.game = null; render(); break;
+        window.MINI.stop();
+        state.screen = "setup"; state.game = null; state.mini = null; render(); window.scrollTo(0, 0); break;
+      default:
+        if (act.indexOf("m-") === 0) window.MINI.act(act, t, ctx);
     }
   }
 
@@ -612,6 +645,8 @@
   function boot(data) {
     if (data && data.state && data.state.setup) {
       state = data.state;
+      if (!state.setup.tab) state.setup.tab = "cartes";
+      if (state.screen === "mini") window.MINI.resume(ctx);
     }
     render();
   }

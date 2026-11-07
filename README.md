@@ -17,6 +17,17 @@ Chacun son tour, on tire une carte.
 - **La valeur dit combien** : 2 à 6 = 1, 7 à 10 = 2, Valet/Dame/Roi = 3.
   Tu refuses une vérité ou un défi ? C'est le double.
 
+## L'onglet Mini-jeux
+
+Quatre jeux différents, avec les mêmes joueurs et la même option alcool / sans alcool :
+
+| Jeu | Le principe |
+| --- | --- |
+| **L'Intrus** (3 joueurs et +) | Tout le monde reçoit le même mot secret, sauf un joueur qui a un mot proche. Chacun donne un indice, puis on vote pour trouver l'intrus. |
+| **La Bombe** | Un thème s'affiche (« un mot qui contient OU », « un pays »…). On dit un mot et on passe le téléphone. Elle explose au hasard : celui qui l'a en main prend. |
+| **Plus ou Moins** | La prochaine carte sera plus haute ou plus basse ? Chaque bonne réponse fait monter le pot. Une erreur et tu prends tout. |
+| **Mots Express** | Faire deviner 5 mots avant la fin du chrono, en expliquant, en mimant ou avec un seul mot. |
+
 ## Les options (écran d'accueil)
 
 | Option | Choix |
@@ -42,5 +53,7 @@ et on peut l'ajouter à l'écran d'accueil comme une appli.
 - `index.html` : la page
 - `style.css` : le design
 - `cards.js` : toutes les questions, défis, duels… (facile à modifier pour ajouter les vôtres)
-- `app.js` : le fonctionnement du jeu
+- `app.js` : le fonctionnement du jeu de cartes
+- `mots.js` : les mots des mini-jeux (paires de l'Intrus, thèmes de la Bombe, mots de Mots Express)
+- `minijeux.js` : le fonctionnement des mini-jeux
 - `sw.js`, `manifest.webmanifest`, `icon.svg` : installation sur téléphone et jeu hors ligne
