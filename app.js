@@ -91,11 +91,22 @@
     g.pools = pools;
   }
   function eligible(cat, g) {
-    return C[cat].filter(function (c) {
-      if (c.hot && !g.opts.epice) return false;
+    var lvl = g.opts.epice, hard = lvl === "hard";
+    var base = C[cat].filter(function (c) {
+      if (c.alcool && !g.opts.alcool) return false;
       if (c.min && g.players.length < c.min) return false;
+      if (c.hard && !hard) return false;
+      if (c.hot && !lvl) return false;
       return true;
     });
+    // En Hard 18+ : uniquement les cartes Hard s'il y en a assez pour un paquet, sinon Hard + Épicé
+    if (hard && cat !== "pouvoir" && cat !== "joker") {
+      var hardOnly = base.filter(function (c) { return c.hard; });
+      if (hardOnly.length >= 13) return hardOnly;
+      var spicy = base.filter(function (c) { return c.hard || c.hot; });
+      if (spicy.length >= 5) return spicy;
+    }
+    return base;
   }
   function drawText(cat, g) {
     if (!g.pools[cat].length) g.pools[cat] = shuffle(eligible(cat, g).slice());
@@ -139,6 +150,7 @@
       suit: suit, v: v, cat: cat, n: n,
       html: fill(tpl.t),
       step: tpl.step || n,
+      hard: !!tpl.hard,
       rule: tpl.rule ? fill(tpl.rule).replace(/<\/?b>/g, "") : null,
       opp: cat === "duel" ? a : null,
     };
@@ -311,6 +323,7 @@
   }
 
   function viewCardOptions(s, nb, mainOn, canStart) {
+    var adultOk = s.epice !== "hard" || !!state.adultOk;
     return '' +
       '<section class="section">' +
         '<div class="label"><span>Les cartes</span></div>' +
@@ -332,8 +345,21 @@
         '<div class="label"><span>Ambiance</span></div>' +
         seg("epice", s.epice, [
           { v: false, label: "Tranquille", sub: "pour tout le monde" },
-          { v: true, label: "Épicé", sub: "questions plus osées" },
+          { v: true, label: "Épicé", sub: "plus osé" },
+          { v: "hard", label: "Hard 18+", sub: "sexe, alcool, secrets" },
         ]) +
+        (s.epice === "hard"
+          ? '<div class="adult">' +
+              "<p><b>Réservé aux adultes.</b> Questions très crues sur le sexe, l'alcool, les drogues et vos secrets.</p>" +
+              "<ul><li>Chacun peut refuser une carte sans se justifier : il prend juste la pénalité.</li>" +
+              "<li>Un défi à deux ne se fait que si l'autre personne est d'accord. Sinon, la carte est annulée.</li>" +
+              "<li>Ce qui se dit ici reste ici.</li></ul>" +
+              '<button type="button" class="adult-check" data-act="adult" aria-pressed="' + !!state.adultOk + '">' +
+                '<span class="box" aria-hidden="true">' + (state.adultOk ? "✓" : "") + "</span>" +
+                "Tous les joueurs ont 18 ans ou plus et sont partants" +
+              "</button>" +
+            "</div>"
+          : "") +
       "</section>" +
 
       '<section class="section">' +
@@ -348,8 +374,8 @@
       "</section>" +
 
       '<div class="section">' +
-        '<button class="btn" type="button" data-act="start"' + (canStart ? "" : " disabled") + ">" +
-          (nb < 2 ? "Ajoute au moins 2 joueurs" : "Lancer la partie") + "</button>" +
+        '<button class="btn" type="button" data-act="start"' + (canStart && adultOk ? "" : " disabled") + ">" +
+          (nb < 2 ? "Ajoute au moins 2 joueurs" : !adultOk ? "Confirme les 18 ans pour lancer" : "Lancer la partie") + "</button>" +
         '<button class="link" type="button" data-act="sheet" data-sheet="rules">Comment on joue ?</button>' +
       "</div>";
   }
@@ -433,7 +459,7 @@
     return '<div class="stage"><div class="card tall' + (red ? " red" : "") + '" style="--cat:' + CAT[c.cat].color + '">' +
       '<div class="corner tl"><span class="v">' + corner.v + '</span><span class="s">' + corner.s + "</span></div>" +
       '<div class="corner br"><span class="v">' + corner.v + '</span><span class="s">' + corner.s + "</span></div>" +
-      '<div class="cat">' + CAT[c.cat].name + "</div>" +
+      '<div class="cat">' + CAT[c.cat].name + (c.hard ? " · 18+" : "") + "</div>" +
       '<div class="body">' + c.html + "</div>" +
       (pen ? '<div class="pen">' + esc(pen) + "</div>" : "") +
     "</div></div>";
@@ -570,7 +596,9 @@
       case "cat":
         s.cats[t.dataset.cat] = !s.cats[t.dataset.cat]; saveSetup(); render(); break;
       case "start":
-        if (s.names.length >= 2) startGame(); break;
+        if (s.names.length >= 2 && (s.epice !== "hard" || state.adultOk)) startGame(); break;
+      case "adult":
+        state.adultOk = !state.adultOk; render(); break;
       case "sheet":
         state.sheet = t.dataset.sheet; renderSheet(); break;
       case "close":

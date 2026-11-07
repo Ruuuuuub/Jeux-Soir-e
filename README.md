@@ -35,7 +35,7 @@ Quatre jeux différents, avec les mêmes joueurs et la même option alcool / san
 | Boissons | Avec alcool (gorgées) / Sans alcool (points + gage final pour le perdant) |
 | Cartes | Cartes de l'appli / Mon vrai paquet (on tire une vraie carte et on la tape dans l'appli) |
 | Durée | 20 cartes, 40 cartes ou paquet entier (cartes de l'appli seulement) |
-| Ambiance | Tranquille / Épicé (questions plus osées) |
+| Ambiance | Tranquille / Épicé (plus osé) / **Hard 18+** (sexe, alcool, drogues, secrets : réservé aux adultes, avec confirmation) |
 | Types de cartes | Vérité, Défi, Tout le monde, Duel, Pouvoir : on active ce qu'on veut |
 
 En mode alcool, une pause eau arrive toutes les 12 cartes. Personne n'est obligé de boire.
@@ -53,6 +53,7 @@ et on peut l'ajouter à l'écran d'accueil comme une appli.
 - `index.html` : la page
 - `style.css` : le design
 - `cards.js` : toutes les questions, défis, duels… (facile à modifier pour ajouter les vôtres)
+- `cartes-hard.js` : les cartes du niveau Hard 18+
 - `app.js` : le fonctionnement du jeu de cartes
 - `mots.js` : les mots des mini-jeux (paires de l'Intrus, thèmes de la Bombe, mots de Mots Express)
 - `minijeux.js` : le fonctionnement des mini-jeux
